@@ -1,11 +1,11 @@
-import { useEffect, useMemo } from 'react'
+import { useEffect } from 'react'
 import ReactFlow, { Background, Controls, useReactFlow } from 'reactflow'
 import { useStore } from '../store'
 import IdeaNode from './nodes/IdeaNode'
 import GhostNode from './nodes/GhostNode'
 import SolidEdge from './nodes/SolidEdge'
 import DashedEdge from './nodes/DashedEdge'
-import AIModeToggle from './AIModeToggle'
+import BottomNavBar from './BottomNavBar'
 
 const nodeTypes = {
   ideaNode: IdeaNode,
@@ -33,10 +33,10 @@ export default function Canvas() {
       const timer = setTimeout(() => fitView({ padding: 0.2 }), 50)
       return () => clearTimeout(timer)
     }
-  }, [nodeCount])
+  }, [nodeCount, fitView])
 
   return (
-    <div className="canvas-wrap">
+    <div className="absolute inset-0">
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -48,10 +48,13 @@ export default function Canvas() {
         edgeTypes={edgeTypes}
         fitView
       >
-        <Background color="var(--border)" gap={28} size={1} />
-        <Controls />
+        <Controls 
+          className="bg-surface-container-lowest/80 backdrop-blur-xl border border-outline-variant/30 rounded-full shadow-none overflow-hidden m-4 [&>button]:border-none [&>button]:p-2 [&>button]:hover:bg-surface-container-high" 
+          position="bottom-center"
+          showInteractive={false}
+        />
       </ReactFlow>
-      <AIModeToggle />
+      <BottomNavBar />
     </div>
   )
 }

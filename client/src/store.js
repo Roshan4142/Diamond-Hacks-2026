@@ -9,6 +9,7 @@ export const useStore = create((set, get) => ({
   aiMode: 'brainstorm',
   rightPanelOpen: false,
   isLoading: false,
+  viewMode: 'entry', // 'entry' | 'map' | 'outline'
 
   onNodesChange: (changes) =>
     set(state => ({ nodes: applyNodeChanges(changes, state.nodes) })),
@@ -19,8 +20,9 @@ export const useStore = create((set, get) => ({
   setAiMode: (mode) => set({ aiMode: mode }),
   setLoading: (val) => set({ isLoading: val }),
   closePanel: () => set({ rightPanelOpen: false, selectedNodeId: null }),
+  setViewMode: (mode) => set({ viewMode: mode }),
 
-  loadMap: (nodes, edges) => set({ nodes, edges, selectedNodeId: null, rightPanelOpen: false }),
+  loadMap: (nodes, edges) => set({ nodes, edges, selectedNodeId: null, rightPanelOpen: false, viewMode: 'map' }),
 
   addChildNode: (parentId) => {
     const id = nanoid()
