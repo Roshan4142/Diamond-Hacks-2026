@@ -2,6 +2,45 @@ import { create } from 'zustand'
 import { applyNodeChanges, applyEdgeChanges } from 'reactflow'
 import { nanoid } from 'nanoid'
 
+const W = 250
+const H = 80
+const PAD = 20
+const RADIUS = 160
+
+function overlaps(a, b) {
+  return Math.abs(a.x - b.x) < W + PAD && Math.abs(a.y - b.y) < H + PAD
+}
+
+function findFreePosition(existingPositions, candidate) {
+  // Spiral outward from candidate until no overlap
+  const angles = [0, Math.PI / 4, Math.PI / 2, (3 * Math.PI) / 4, Math.PI, (5 * Math.PI) / 4, (3 * Math.PI) / 2, (7 * Math.PI) / 4]
+  let pos = { ...candidate }
+  let r = 0
+  let attempts = 0
+  while (existingPositions.some(p => overlaps(p, pos)) && attempts < 80) {
+    r += H + PAD
+    const angle = angles[attempts % angles.length]
+    pos = { x: candidate.x + Math.cos(angle) * r, y: candidate.y + Math.sin(angle) * r }
+    attempts++
+  }
+  return pos
+}
+
+function bestAngle(parentPos, existingPositions) {
+  const steps = 12
+  let best = 0
+  let bestDist = -1
+  for (let i = 0; i < steps; i++) {
+    const angle = (i * 2 * Math.PI) / steps
+    const cand = { x: parentPos.x + Math.cos(angle) * RADIUS, y: parentPos.y + Math.sin(angle) * RADIUS }
+    const minDist = existingPositions.length
+      ? Math.min(...existingPositions.map(p => Math.hypot(cand.x - p.x, cand.y - p.y)))
+      : Infinity
+    if (minDist > bestDist) { bestDist = minDist; best = angle }
+  }
+  return best
+}
+
 export const useStore = create((set, get) => ({
   nodes: [],
   edges: [],
@@ -16,7 +55,8 @@ export const useStore = create((set, get) => ({
   onEdgesChange: (changes) =>
     set(state => ({ edges: applyEdgeChanges(changes, state.edges) })),
 
-  setSelectedNodeId: (id) => set({ selectedNodeId: id, rightPanelOpen: !!id }),
+  setSelectedNodeId: (id) => set({ selectedNodeId: id }),
+  openPanel: () => set({ rightPanelOpen: true }),
   setAiMode: (mode) => set({ aiMode: mode }),
   setLoading: (val) => set({ isLoading: val }),
   closePanel: () => set({ rightPanelOpen: false, selectedNodeId: null }),
@@ -26,14 +66,19 @@ export const useStore = create((set, get) => ({
 
   addChildNode: (parentId) => {
     const id = nanoid()
-    const parent = get().nodes.find(n => n.id === parentId)
+    const { nodes } = get()
+    const parent = nodes.find(n => n.id === parentId)
+    const parentPos = parent?.position ?? { x: 0, y: 0 }
+    const angle = bestAngle(parentPos, nodes.map(n => n.position))
+    const candidate = {
+      x: parentPos.x + Math.cos(angle) * RADIUS,
+      y: parentPos.y + Math.sin(angle) * RADIUS,
+    }
+    const position = findFreePosition(nodes.map(n => n.position), candidate)
     const newNode = {
       id,
       type: 'ideaNode',
-      position: {
-        x: (parent?.position.x ?? 0) + 250,
-        y: (parent?.position.y ?? 0) + (Math.random() * 100 - 50),
-      },
+      position,
       data: { label: 'New idea', parentId },
     }
     const newEdge = {
@@ -50,16 +95,22 @@ export const useStore = create((set, get) => ({
   },
 
   addGhostNodes: (parentId, suggestions) => {
-    const parent = get().nodes.find(n => n.id === parentId)
-    const newNodes = suggestions.map((text, i) => ({
-      id: nanoid(),
-      type: 'ghostNode',
-      position: {
-        x: parent?.position.x > 900 ? (parent?.position.x ?? 0) - 280 : (parent?.position.x ?? 0) + 280,
-        y: (parent?.position.y ?? 0) + (i - suggestions.length / 2) * 90,
-      },
-      data: { label: text, parentId },
-    }))
+    const { nodes } = get()
+    const parent = nodes.find(n => n.id === parentId)
+    const parentPos = parent?.position ?? { x: 0, y: 0 }
+    const placed = [...nodes.map(n => n.position)]
+    const baseAngle = bestAngle(parentPos, placed)
+    const count = suggestions.length
+    const newNodes = suggestions.map((text, i) => {
+      const angle = baseAngle + (i - (count - 1) / 2) * (Math.PI / 4)
+      const candidate = {
+        x: parentPos.x + Math.cos(angle) * RADIUS,
+        y: parentPos.y + Math.sin(angle) * RADIUS,
+      }
+      const position = findFreePosition(placed, candidate)
+      placed.push(position)
+      return { id: nanoid(), type: 'ghostNode', position, data: { label: text, parentId } }
+    })
     const newEdges = newNodes.map(node => ({
       id: `e-${parentId}-${node.id}`,
       source: parentId,
@@ -98,6 +149,16 @@ export const useStore = create((set, get) => ({
     }))
   },
 
+  clearGhostNodes: () => {
+    set(state => {
+      const ghostIds = new Set(state.nodes.filter(n => n.type === 'ghostNode').map(n => n.id))
+      return {
+        nodes: state.nodes.filter(n => !ghostIds.has(n.id)),
+        edges: state.edges.filter(e => !ghostIds.has(e.target) && !ghostIds.has(e.source)),
+      }
+    })
+  },
+
   deleteNode: (nodeId) => {
     set(state => ({
       nodes: state.nodes.filter(n => n.id !== nodeId),
@@ -110,6 +171,7 @@ export const useStore = create((set, get) => ({
 
 export const useChatStore = create((set, get) => ({
   chats: {},
+  summaries: {},
   addMessage: (nodeId, role, content) =>
     set(state => ({
       chats: {
@@ -118,4 +180,7 @@ export const useChatStore = create((set, get) => ({
       },
     })),
   getMessages: (nodeId) => get().chats[nodeId] ?? [],
+  setSummary: (nodeId, summary) =>
+    set(state => ({ summaries: { ...state.summaries, [nodeId]: summary } })),
+  getSummary: (nodeId) => get().summaries[nodeId] ?? null,
 }))

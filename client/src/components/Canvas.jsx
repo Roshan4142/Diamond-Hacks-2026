@@ -5,7 +5,6 @@ import IdeaNode from './nodes/IdeaNode'
 import GhostNode from './nodes/GhostNode'
 import SolidEdge from './nodes/SolidEdge'
 import DashedEdge from './nodes/DashedEdge'
-import BottomNavBar from './BottomNavBar'
 
 const nodeTypes = {
   ideaNode: IdeaNode,
@@ -22,7 +21,9 @@ export default function Canvas() {
   const edges = useStore(s => s.edges)
   const onNodesChange = useStore(s => s.onNodesChange)
   const onEdgesChange = useStore(s => s.onEdgesChange)
+  const selectedNodeId = useStore(s => s.selectedNodeId)
   const setSelectedNodeId = useStore(s => s.setSelectedNodeId)
+  const openPanel = useStore(s => s.openPanel)
   const closePanel = useStore(s => s.closePanel)
 
   const { fitView } = useReactFlow()
@@ -33,28 +34,28 @@ export default function Canvas() {
       const timer = setTimeout(() => fitView({ padding: 0.2 }), 50)
       return () => clearTimeout(timer)
     }
-  }, [nodeCount, fitView])
+  }, [nodeCount])
 
   return (
-    <div className="absolute inset-0">
+    <div className="canvas-wrap">
       <ReactFlow
         nodes={nodes}
         edges={edges}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
-        onNodeClick={(_, node) => setSelectedNodeId(node.id)}
+        onNodeClick={(_, node) => {
+          if (node.id === selectedNodeId) openPanel()
+          else setSelectedNodeId(node.id)
+        }}
         onPaneClick={() => closePanel()}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
         fitView
+        proOptions={{ hideAttribution: true }}
       >
-        <Controls 
-          className="bg-surface-container-lowest/80 backdrop-blur-xl border border-outline-variant/30 rounded-full shadow-none overflow-hidden m-4 [&>button]:border-none [&>button]:p-2 [&>button]:hover:bg-surface-container-high" 
-          position="bottom-center"
-          showInteractive={false}
-        />
+        <Background color="var(--border)" gap={28} size={1} />
+        <Controls />
       </ReactFlow>
-      <BottomNavBar />
     </div>
   )
 }

@@ -1,13 +1,20 @@
 import { useState, useRef, useEffect } from 'react'
 import { Handle, Position } from 'reactflow'
-import { useStore } from '../../store'
+import { useStore, useChatStore } from '../../store'
 import FloatingToolbar from '../FloatingToolbar'
 
 export default function IdeaNode({ id, data, selected }) {
   const updateNodeLabel = useStore(s => s.updateNodeLabel)
+  const getMessages = useChatStore(s => s.getMessages)
+  const getSummary = useChatStore(s => s.getSummary)
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(data.label)
+  const [showTooltip, setShowTooltip] = useState(false)
   const inputRef = useRef(null)
+
+  const messages = getMessages(id)
+  const summary = getSummary(id)
+  const hasChat = messages.length > 0
 
   useEffect(() => {
     setDraft(data.label)
@@ -33,31 +40,47 @@ export default function IdeaNode({ id, data, selected }) {
   }
 
   return (
-    <div 
-      className={`bg-surface-container-lowest px-6 py-3 rounded-[20px] transition-all duration-300 relative ${selected ? 'border-2 border-tertiary ring-4 ring-tertiary/10 shadow-xl z-20' : 'border border-outline-variant/20 shadow-sm z-10 hover:border-primary/50'}`}
+    <div
+      className={`idea-node${selected ? ' selected' : ''}`}
       onDoubleClick={() => setEditing(true)}
+      onMouseEnter={() => hasChat && setShowTooltip(true)}
+      onMouseLeave={() => setShowTooltip(false)}
     >
-      <Handle type="target" position={Position.Left} className="w-2 h-2 !bg-outline-variant !border-none" />
+      <Handle type="target" position={Position.Left} />
 
       {selected && <FloatingToolbar nodeId={id} nodeText={data.label} />}
 
       {editing ? (
         <input
           ref={inputRef}
-          className="bg-transparent border-none p-0 outline-none font-headline text-lg text-primary font-bold min-w-[80px]"
+          className="idea-node-input"
           value={draft}
           onChange={e => setDraft(e.target.value)}
           onBlur={commit}
           onKeyDown={handleKeyDown}
-          autoFocus
+          style={{ minWidth: 80 }}
         />
       ) : (
-        <span className={`font-headline text-lg ${selected ? 'text-primary font-bold' : 'text-on-surface'}`}>
-          {data.label}
-        </span>
+        <div className="idea-node-label">{data.label}</div>
       )}
 
-      <Handle type="source" position={Position.Right} className="w-2 h-2 !bg-outline-variant !border-none" />
+      {hasChat && (
+        <div className="chat-indicator" title="Has chat history">
+          <span className="chat-indicator-dot" />
+        </div>
+      )}
+
+      {hasChat && showTooltip && !selected && (
+        <div className="chat-tooltip">
+          <div className="chat-tooltip-header">Chat summary</div>
+          <div className="chat-tooltip-text">
+            {summary ?? 'Generating summary…'}
+          </div>
+          <div className="chat-tooltip-count">{messages.length} message{messages.length !== 1 ? 's' : ''}</div>
+        </div>
+      )}
+
+      <Handle type="source" position={Position.Right} />
     </div>
   )
 }

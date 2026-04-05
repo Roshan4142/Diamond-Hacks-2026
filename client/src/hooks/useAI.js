@@ -12,10 +12,11 @@ export function useAI() {
 
   return {
     generateMap: (topic) => post('generate-map', { topic }),
-    expandNode: (nodeText, ancestorTexts, mode) =>
-      post('expand-node', { nodeText, ancestorTexts, mode }),
+    expandNode: (nodeText, ancestorTexts, chatHistory) =>
+      post('expand-node', { nodeText, ancestorTexts, chatHistory }),
     rephrase: (text) => post('rephrase', { text }),
-    chat: (nodeText, ancestorTexts, history, message, mode) =>
-      post('chat', { nodeText, ancestorTexts, history, message, mode }),
+    chat: (nodeText, ancestorTexts, history, message) =>
+      post('chat', { nodeText, ancestorTexts, history, message }),
+    summarize: (messages) => post('summarize', { messages }),
   }
 }

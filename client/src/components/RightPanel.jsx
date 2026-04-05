@@ -7,13 +7,11 @@ export default function RightPanel() {
   const selectedNodeId = useStore(s => s.selectedNodeId)
   const nodes = useStore(s => s.nodes)
   const edges = useStore(s => s.edges)
-  const aiMode = useStore(s => s.aiMode)
   const closePanel = useStore(s => s.closePanel)
   const acceptGhostNode = useStore(s => s.acceptGhostNode)
   const deleteNode = useStore(s => s.deleteNode)
-
-  const { addMessage, getMessages } = useChatStore()
-  const { chat } = useAI()
+  const { addMessage, getMessages, setSummary } = useChatStore()
+  const { chat, summarize } = useAI()
   const ancestorTexts = useAncestors(selectedNodeId)
 
   const [tab, setTab] = useState('chat')
@@ -32,7 +30,6 @@ export default function RightPanel() {
 
   const nodeText = node.data.label
 
-  // Children of this node
   const childEdges = edges.filter(e => e.source === selectedNodeId)
   const childNodes = childEdges.map(e => nodes.find(n => n.id === e.target)).filter(Boolean)
   const ghostChildren = childNodes.filter(n => n.type === 'ghostNode')
@@ -45,8 +42,12 @@ export default function RightPanel() {
     addMessage(selectedNodeId, 'user', trimmed)
     try {
       const history = getMessages(selectedNodeId)
-      const result = await chat(nodeText, ancestorTexts, history, trimmed, aiMode)
+      const result = await chat(nodeText, ancestorTexts, history, trimmed)
       addMessage(selectedNodeId, 'assistant', result)
+
+      const updatedHistory = [...history, { role: 'user', content: trimmed }, { role: 'assistant', content: result }]
+      const nodeId = selectedNodeId
+      summarize(updatedHistory).then(summary => setSummary(nodeId, summary)).catch(() => {})
     } catch (err) {
       addMessage(selectedNodeId, 'assistant', `Error: ${err.message}`)
     } finally {
