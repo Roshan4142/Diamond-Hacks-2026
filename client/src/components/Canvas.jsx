@@ -54,7 +54,6 @@ export default function Canvas() {
         onPaneClick={() => closePanel()}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
-        fitView
         proOptions={{ hideAttribution: true }}
       >
         <Background color="var(--border)" gap={28} size={1} />

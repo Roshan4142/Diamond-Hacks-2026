@@ -45,7 +45,8 @@ export default function IdeaNode({ id, data, selected }) {
       onMouseEnter={() => hasChat && setShowTooltip(true)}
       onMouseLeave={() => setShowTooltip(false)}
     >
-      <Handle type="target" position={Position.Left} />
+      <Handle type="target" position={Position.Left} id="target-left" />
+      <Handle type="target" position={Position.Right} id="target-right" />
 
       {selected && <FloatingToolbar nodeId={id} nodeText={data.label} />}
 
@@ -79,7 +80,8 @@ export default function IdeaNode({ id, data, selected }) {
         </div>
       )}
 
-      <Handle type="source" position={Position.Right} />
+      <Handle type="source" position={Position.Left} id="source-left" />
+      <Handle type="source" position={Position.Right} id="source-right" />
     </div>
   )
 }

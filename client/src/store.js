@@ -7,6 +7,13 @@ const H = 80
 const PAD = 20
 const RADIUS = 160
 
+function edgeHandles(parentPos, childPos) {
+  if (childPos.x < parentPos.x) {
+    return { sourceHandle: 'source-left', targetHandle: 'target-right' }
+  }
+  return { sourceHandle: 'source-right', targetHandle: 'target-left' }
+}
+
 function overlaps(a, b) {
   return Math.abs(a.x - b.x) < W + PAD && Math.abs(a.y - b.y) < H + PAD
 }
@@ -88,6 +95,7 @@ export const useStore = create((set, get) => ({
       source: parentId,
       target: id,
       type: 'solidEdge',
+      ...edgeHandles(parentPos, position),
     }
     set(state => ({
       nodes: [...state.nodes, newNode],
@@ -121,6 +129,7 @@ export const useStore = create((set, get) => ({
       source: parentId,
       target: node.id,
       type: 'dashedEdge',
+      ...edgeHandles(parentPos, node.position),
     }))
     set(state => ({
       nodes: [...state.nodes, ...newNodes],
@@ -186,6 +195,7 @@ export const useStore = create((set, get) => ({
       source: parentId,
       target: id,
       type: 'solidEdge',
+      ...edgeHandles(parentPos, position),
     }
     set(state => ({
       nodes: [...state.nodes, newNode],

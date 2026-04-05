@@ -7,7 +7,8 @@ export default function GhostNode({ id, data }) {
 
   return (
     <div className="ghost-node">
-      <Handle type="target" position={Position.Left} />
+      <Handle type="target" position={Position.Left} id="target-left" />
+      <Handle type="target" position={Position.Right} id="target-right" />
       <div className="ghost-label-hint">AI suggestion</div>
       <div className="ghost-node-row">
         <span className="ghost-node-text">{data.label}</span>
@@ -28,7 +29,8 @@ export default function GhostNode({ id, data }) {
           </button>
         </div>
       </div>
-      <Handle type="source" position={Position.Right} />
+      <Handle type="source" position={Position.Left} id="source-left" />
+      <Handle type="source" position={Position.Right} id="source-right" />
     </div>
   )
 }
