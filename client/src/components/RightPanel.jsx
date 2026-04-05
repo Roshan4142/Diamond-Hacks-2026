@@ -10,13 +10,15 @@ export default function RightPanel() {
   const closePanel = useStore(s => s.closePanel)
   const acceptGhostNode = useStore(s => s.acceptGhostNode)
   const deleteNode = useStore(s => s.deleteNode)
+  const addInsightNode = useStore(s => s.addInsightNode)
   const { addMessage, getMessages, setSummary } = useChatStore()
-  const { chat, summarize } = useAI()
+  const { chat, summarize, condense } = useAI()
   const ancestorTexts = useAncestors(selectedNodeId)
 
   const [tab, setTab] = useState('chat')
   const [input, setInput] = useState('')
   const [sending, setSending] = useState(false)
+  const [pinningIndex, setPinningIndex] = useState(null)
   const messagesEndRef = useRef(null)
 
   const node = nodes.find(n => n.id === selectedNodeId)
@@ -62,6 +64,19 @@ export default function RightPanel() {
     }
   }
 
+  async function handlePin(content, index) {
+    if (pinningIndex !== null) return
+    setPinningIndex(index)
+    try {
+      const label = await condense(content)
+      addInsightNode(selectedNodeId, label, content)
+    } catch (err) {
+      alert('Pin failed: ' + err.message)
+    } finally {
+      setPinningIndex(null)
+    }
+  }
+
   function acceptAll() {
     ghostChildren.forEach(n => acceptGhostNode(n.id))
   }
@@ -97,8 +112,32 @@ export default function RightPanel() {
               </p>
             )}
             {messages.map((msg, i) => (
-              <div key={i} className={`chat-msg ${msg.role}`}>
-                {msg.content}
+              <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: msg.role === 'assistant' ? 'flex-start' : 'flex-end', gap: 4 }}>
+                <div className={`chat-msg ${msg.role}`}>{msg.content}</div>
+                {msg.role === 'assistant' && (
+                  <button
+                    onClick={() => handlePin(msg.content, i)}
+                    disabled={pinningIndex !== null}
+                    title="Pin to canvas as insight node"
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: 'var(--teal)',
+                      cursor: pinningIndex !== null ? 'wait' : 'pointer',
+                      fontSize: 11,
+                      padding: '0 2px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 3,
+                      opacity: 0.6,
+                      transition: 'opacity 0.15s',
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.opacity = 1}
+                    onMouseLeave={e => e.currentTarget.style.opacity = 0.6}
+                  >
+                    {pinningIndex === i ? <span className="spinner" /> : '⊕ pin to canvas'}
+                  </button>
+                )}
               </div>
             ))}
             {sending && (

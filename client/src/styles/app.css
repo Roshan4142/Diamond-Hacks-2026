@@ -1,6 +1,9 @@
 @import 'reactflow/dist/style.css';
 
 :root {
+  --teal: #4db8b8;
+  --teal-dim: rgba(77, 184, 184, 0.1);
+  --teal-border: rgba(77, 184, 184, 0.45);
   --bg-base: #0d0d0d;
   --bg-surface: #161616;
   --bg-surface-2: #1e1e1e;
@@ -337,6 +340,81 @@ body { background: var(--bg-base); color: var(--text-primary); font-family: 'Int
 .ghost-btn.accept { color: #6abf6a; }
 .ghost-btn.reject { color: #d9534f; }
 .ghost-btn:hover { background: var(--bg-surface-3); }
+
+/* ── InsightNode ── */
+.insight-node {
+  background: var(--teal-dim);
+  border: 1px solid var(--teal-border);
+  border-radius: var(--radius);
+  padding: 8px 14px 10px;
+  min-width: 130px;
+  max-width: 260px;
+  position: relative;
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  user-select: none;
+}
+
+.insight-node.selected {
+  border-color: var(--teal);
+  box-shadow: 0 0 0 2px rgba(77, 184, 184, 0.12), var(--shadow);
+}
+
+.insight-node:hover:not(.selected) {
+  border-color: var(--teal);
+  box-shadow: var(--shadow);
+}
+
+.insight-label-hint {
+  font-size: 10px;
+  color: var(--teal);
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+  opacity: 0.9;
+}
+
+.insight-node-label {
+  font-size: 13px;
+  font-weight: 450;
+  color: var(--text-primary);
+  line-height: 1.5;
+  word-break: break-word;
+}
+
+.insight-tooltip {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: 280px;
+  background: var(--bg-surface-2);
+  border: 1px solid var(--teal-border);
+  border-radius: var(--radius-lg);
+  padding: 10px;
+  z-index: 200;
+  box-shadow: var(--shadow-lg);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  pointer-events: none;
+}
+
+.insight-tooltip-header {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--teal);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+
+.insight-tooltip-text {
+  font-size: 12px;
+  color: var(--text-primary);
+  line-height: 1.55;
+  word-break: break-word;
+}
 
 /* ── FloatingToolbar ── */
 .floating-toolbar {

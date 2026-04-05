@@ -7,7 +7,7 @@ app.use(cors())
 app.use(express.json())
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY })
-const MODEL = 'meta-llama/llama-4-maverick-17b-128e-instruct'
+const MODEL = 'meta-llama/llama-4-scout-17b-16e-instruct'
 
 async function callGroq(systemPrompt, userMessage, maxTokens = 512) {
   const response = await groq.chat.completions.create({
@@ -45,7 +45,12 @@ Generate exactly 5 top-level children. Each may have 2-3 sub-children. Keep all 
 // Returns: string[] of 4 suggestions
 app.post('/api/expand-node', async (req, res) => {
   try {
-    const { nodeText, ancestorTexts = [], chatHistory = [] } = req.body
+    const { nodeText, ancestorTexts = [], chatHistory = [], size = 'medium' } = req.body
+    const sizeInstructions = {
+      brief: 'Each suggestion must be 3–6 words — short labels only.',
+      medium: 'Each suggestion should be 8–15 words — clear and specific.',
+      detailed: 'Each suggestion should be 20–35 words — a full sentence that explains the idea and why it matters.',
+    }
     const chatContext = chatHistory.length
       ? '\n\nChat history on this node (use this to inform your suggestions):\n' +
         chatHistory.map(m => `${m.role === 'user' ? 'User' : 'AI'}: ${m.content}`).join('\n')
@@ -53,14 +58,29 @@ app.post('/api/expand-node', async (req, res) => {
     const system = `You are a mind map assistant. Suggest 4 child node ideas to expand a node.
 Think about what someone at an early stage of exploring this topic would need first. Prioritize foundational, practical ideas before advanced or niche ones. Suggest what a thoughtful mentor would say — grounded, actionable, and genuinely useful for someone just getting started.
 If chat history is provided, let it guide your suggestions — lean into the specific angles, questions, or interests the user expressed.
-Return ONLY a JSON array of 4 strings. Each should be a clear, specific idea — up to 10 words. No markdown, no explanation.
-Example: ["Learn basic knife skills", "Cook your first simple dish", "Stock a beginner pantry", "Understand heat and cooking methods"]`
+${sizeInstructions[size] ?? sizeInstructions.medium}
+Return ONLY a JSON array of 4 strings. No markdown, no explanation.`
     const context = (ancestorTexts.length
       ? `Context (root to parent): ${ancestorTexts.join(' > ')}\n\nCurrent node: "${nodeText}"`
       : `Current node: "${nodeText}"`) + chatContext
-    const raw = await callGroq(system, context, 768)
+    const maxTok = size === 'detailed' ? 1024 : 768
+    const raw = await callGroq(system, context, maxTok)
     const data = JSON.parse(raw)
     res.json({ success: true, data })
+  } catch (e) {
+    res.status(500).json({ success: false, error: e.message })
+  }
+})
+
+// POST /api/condense
+// Body: { text: string }
+// Returns: string — 1-2 sentence condensed label for a mind map node
+app.post('/api/condense', async (req, res) => {
+  try {
+    const { text } = req.body
+    const system = `Condense the following text into 1-2 tight sentences (15-25 words) suitable as a mind map node label. Capture the core insight clearly and directly. Return ONLY the condensed text, nothing else.`
+    const raw = await callGroq(system, text, 128)
+    res.json({ success: true, data: raw.trim() })
   } catch (e) {
     res.status(500).json({ success: false, error: e.message })
   }

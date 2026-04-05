@@ -3,12 +3,14 @@ import ReactFlow, { Background, Controls, useReactFlow } from 'reactflow'
 import { useStore } from '../store'
 import IdeaNode from './nodes/IdeaNode'
 import GhostNode from './nodes/GhostNode'
+import InsightNode from './nodes/InsightNode'
 import SolidEdge from './nodes/SolidEdge'
 import DashedEdge from './nodes/DashedEdge'
 
 const nodeTypes = {
   ideaNode: IdeaNode,
   ghostNode: GhostNode,
+  insightNode: InsightNode,
 }
 
 const edgeTypes = {

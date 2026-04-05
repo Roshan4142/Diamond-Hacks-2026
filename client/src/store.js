@@ -46,6 +46,7 @@ export const useStore = create((set, get) => ({
   edges: [],
   selectedNodeId: null,
   aiMode: 'brainstorm',
+  expandSize: 'medium',
   rightPanelOpen: false,
   isLoading: false,
   viewMode: 'entry', // 'entry' | 'map' | 'outline'
@@ -58,6 +59,7 @@ export const useStore = create((set, get) => ({
   setSelectedNodeId: (id) => set({ selectedNodeId: id }),
   openPanel: () => set({ rightPanelOpen: true }),
   setAiMode: (mode) => set({ aiMode: mode }),
+  setExpandSize: (size) => set({ expandSize: size }),
   setLoading: (val) => set({ isLoading: val }),
   closePanel: () => set({ rightPanelOpen: false, selectedNodeId: null }),
   setViewMode: (mode) => set({ viewMode: mode }),
@@ -160,6 +162,36 @@ export const useStore = create((set, get) => ({
         edges: state.edges.filter(e => !ghostIds.has(e.target) && !ghostIds.has(e.source)),
       }
     })
+  },
+
+  addInsightNode: (parentId, label, sourceMessage) => {
+    const id = nanoid()
+    const { nodes } = get()
+    const parent = nodes.find(n => n.id === parentId)
+    const parentPos = parent?.position ?? { x: 0, y: 0 }
+    const angle = bestAngle(parentPos, nodes.map(n => n.position))
+    const candidate = {
+      x: parentPos.x + Math.cos(angle) * RADIUS,
+      y: parentPos.y + Math.sin(angle) * RADIUS,
+    }
+    const position = findFreePosition(nodes.map(n => n.position), candidate)
+    const newNode = {
+      id,
+      type: 'insightNode',
+      position,
+      data: { label, sourceMessage, parentId },
+    }
+    const newEdge = {
+      id: `e-${parentId}-${id}`,
+      source: parentId,
+      target: id,
+      type: 'solidEdge',
+    }
+    set(state => ({
+      nodes: [...state.nodes, newNode],
+      edges: [...state.edges, newEdge],
+    }))
+    return id
   },
 
   deleteNode: (nodeId) => {

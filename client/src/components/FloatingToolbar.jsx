@@ -7,6 +7,7 @@ export default function FloatingToolbar({ nodeId, nodeText }) {
   const addChildNode = useStore(s => s.addChildNode)
   const addGhostNodes = useStore(s => s.addGhostNodes)
   const updateNodeLabel = useStore(s => s.updateNodeLabel)
+  const expandSize = useStore(s => s.expandSize)
   const { expandNode, rephrase } = useAI()
   const ancestorTexts = useAncestors(nodeId)
   const getMessages = useChatStore(s => s.getMessages)
@@ -19,7 +20,7 @@ export default function FloatingToolbar({ nodeId, nodeText }) {
     setLoadingExpand(true)
     try {
       const chatHistory = getMessages(nodeId)
-      const suggestions = await expandNode(nodeText, ancestorTexts, chatHistory)
+      const suggestions = await expandNode(nodeText, ancestorTexts, chatHistory, expandSize)
       addGhostNodes(nodeId, suggestions)
     } catch (err) {
       alert(err.message)
