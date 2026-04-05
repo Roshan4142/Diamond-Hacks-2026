@@ -3,6 +3,7 @@ import { useStore } from './store'
 import EntryPrompt from './components/EntryPrompt'
 import Canvas from './components/Canvas'
 import RightPanel from './components/RightPanel'
+import BottomNavBar from './components/BottomNavBar'
 
 export default function App() {
   const nodes = useStore(s => s.nodes)
@@ -31,6 +32,7 @@ export default function App() {
         </ReactFlowProvider>
         {rightPanelOpen && <RightPanel />}
       </div>
+      <BottomNavBar />
     </>
   )
 }

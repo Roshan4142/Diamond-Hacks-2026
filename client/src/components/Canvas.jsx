@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import ReactFlow, { Background, Controls, useReactFlow } from 'reactflow'
 import { useStore } from '../store'
 import IdeaNode from './nodes/IdeaNode'
@@ -28,9 +28,11 @@ export default function Canvas() {
 
   const { fitView } = useReactFlow()
   const nodeCount = nodes.length
+  const initialFitDone = useRef(false)
 
   useEffect(() => {
-    if (nodeCount > 0) {
+    if (nodeCount > 0 && !initialFitDone.current) {
+      initialFitDone.current = true
       const timer = setTimeout(() => fitView({ padding: 0.2 }), 50)
       return () => clearTimeout(timer)
     }

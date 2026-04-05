@@ -11,21 +11,44 @@ export default function BottomNavBar() {
   const setAiMode = useStore(s => s.setAiMode)
 
   return (
-    <nav className="fixed bottom-8 left-8 rounded-full px-6 py-3 border border-[#1b1c19]/10 bg-[#fbf9f4]/80 backdrop-blur-xl flex items-center gap-4 z-50 shadow-[0px_12px_32px_rgba(27,28,25,0.06)]">
+    <nav style={{
+      position: 'fixed',
+      bottom: '32px',
+      left: '50%',
+      transform: 'translateX(-50%)',
+      background: 'var(--bg-surface-2)',
+      border: '1px solid var(--border)',
+      borderRadius: '20px',
+      padding: '4px 8px',
+      display: 'flex',
+      alignItems: 'center',
+      gap: '2px',
+      zIndex: 50,
+      boxShadow: 'var(--shadow-lg)',
+    }}>
       {MODES.map(m => {
         const isActive = aiMode === m.key
         return (
           <button
             key={m.key}
             onClick={() => setAiMode(m.key)}
-            className={
-              isActive
-                ? "bg-[#33245a] text-white rounded-full px-4 py-1 flex items-center gap-2 transition-transform scale-95"
-                : "text-stone-600 flex items-center gap-2 px-3 hover:bg-stone-200 transition-colors rounded-full py-1"
-            }
+            style={{
+              background: isActive ? 'var(--purple)' : 'none',
+              border: 'none',
+              borderRadius: '16px',
+              color: isActive ? '#fff' : 'var(--text-secondary)',
+              cursor: 'pointer',
+              fontSize: '12px',
+              padding: '4px 9px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+              fontWeight: 500,
+              transition: 'background 0.1s, color 0.1s',
+            }}
           >
-            <span className="material-symbols-outlined text-sm">{m.icon}</span>
-            <span className="font-sans text-[10px] uppercase tracking-widest font-medium">{m.label}</span>
+            <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>{m.icon}</span>
+            <span style={{ fontFamily: 'inherit', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{m.label}</span>
           </button>
         )
       })}

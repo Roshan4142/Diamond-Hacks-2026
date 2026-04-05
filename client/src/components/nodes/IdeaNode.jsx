@@ -6,14 +6,13 @@ import FloatingToolbar from '../FloatingToolbar'
 export default function IdeaNode({ id, data, selected }) {
   const updateNodeLabel = useStore(s => s.updateNodeLabel)
   const getMessages = useChatStore(s => s.getMessages)
-  const getSummary = useChatStore(s => s.getSummary)
+  const summary = useChatStore(s => s.summaries[id] ?? null)
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(data.label)
   const [showTooltip, setShowTooltip] = useState(false)
   const inputRef = useRef(null)
 
   const messages = getMessages(id)
-  const summary = getSummary(id)
   const hasChat = messages.length > 0
 
   useEffect(() => {

@@ -98,19 +98,22 @@ export const useStore = create((set, get) => ({
     const { nodes } = get()
     const parent = nodes.find(n => n.id === parentId)
     const parentPos = parent?.position ?? { x: 0, y: 0 }
-    const placed = [...nodes.map(n => n.position)]
-    const baseAngle = bestAngle(parentPos, placed)
+    // Pick best horizontal direction (left or right), ignore vertical angles
+    const rightFree = nodes.filter(n => n.position.x > parentPos.x + 50).length
+    const leftFree = nodes.filter(n => n.position.x < parentPos.x - 50).length
+    const goRight = rightFree <= leftFree
+    const xOffset = goRight ? RADIUS + 80 : -(RADIUS + 80)
     const count = suggestions.length
-    const newNodes = suggestions.map((text, i) => {
-      const angle = baseAngle + (i - (count - 1) / 2) * (Math.PI / 4)
-      const candidate = {
-        x: parentPos.x + Math.cos(angle) * RADIUS,
-        y: parentPos.y + Math.sin(angle) * RADIUS,
-      }
-      const position = findFreePosition(placed, candidate)
-      placed.push(position)
-      return { id: nanoid(), type: 'ghostNode', position, data: { label: text, parentId } }
-    })
+    const totalH = (count - 1) * 90
+    const newNodes = suggestions.map((text, i) => ({
+      id: nanoid(),
+      type: 'ghostNode',
+      position: {
+        x: parentPos.x + xOffset,
+        y: parentPos.y - totalH / 2 + i * 90,
+      },
+      data: { label: text, parentId },
+    }))
     const newEdges = newNodes.map(node => ({
       id: `e-${parentId}-${node.id}`,
       source: parentId,
