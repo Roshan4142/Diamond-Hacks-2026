@@ -1,28 +1,20 @@
 import { useState } from 'react'
+import { nanoid } from 'nanoid'
 import { useStore } from '../store'
-import { useAI } from '../hooks/useAI'
-import { mapToFlow } from '../utils/treeHelpers'
 
 export default function EntryPrompt() {
   const loadMap = useStore(s => s.loadMap)
-  const { generateMap } = useAI()
   const [topic, setTopic] = useState('')
-  const [loading, setLoading] = useState(false)
 
-  async function handleSubmit(e) {
+  function handleSubmit(e) {
     e.preventDefault()
     const trimmed = topic.trim()
-    if (!trimmed || loading) return
-    setLoading(true)
-    try {
-      const data = await generateMap(trimmed)
-      const { nodes, edges } = mapToFlow(data)
-      loadMap(nodes, edges)
-    } catch (err) {
-      alert(err.message)
-    } finally {
-      setLoading(false)
-    }
+    if (!trimmed) return
+    const id = nanoid()
+    loadMap(
+      [{ id, type: 'ideaNode', position: { x: 0, y: 0 }, data: { label: trimmed, parentId: null } }],
+      []
+    )
   }
 
   return (
@@ -38,8 +30,8 @@ export default function EntryPrompt() {
             onChange={e => setTopic(e.target.value)}
             autoFocus
           />
-          <button className="entry-btn" type="submit" disabled={loading || !topic.trim()}>
-            {loading ? <span className="spinner" /> : 'Generate map →'}
+          <button className="entry-btn" type="submit" disabled={!topic.trim()}>
+            Start →
           </button>
         </form>
       </div>
